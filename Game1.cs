@@ -10,10 +10,11 @@ namespace SnakeGeneticLearning
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
-        int countofsnake = 15;
+        int countofsnake = 50;
+        int gridlength;
         Generation gen;
         InfoBloc[] bloclist;
-        double BestSnake = 1;
+        double BestSnake = 0;
         TimeSpan timer = new TimeSpan();
         double gamespeed = 1;
         double lastchange = 0;
@@ -23,6 +24,9 @@ namespace SnakeGeneticLearning
         int gencounter;
         double[] computemap;
         KeyboardState state;
+        double closenesstofood;
+        int scorecount;
+        
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -33,15 +37,16 @@ namespace SnakeGeneticLearning
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            _graphics.PreferredBackBufferWidth = 10 * countofsnake + 1;
-            _graphics.PreferredBackBufferHeight = 10 * countofsnake + 1;
+            _graphics.PreferredBackBufferWidth = 10 * countofsnake*2 + 1;
+            _graphics.PreferredBackBufferHeight = 10 * countofsnake*2 + 1;
             _graphics.ApplyChanges();
             base.Initialize();
         }
 
         protected override void LoadContent()
         {
-            computemap = new double[countofsnake * countofsnake];
+            gridlength = countofsnake * 2;
+            computemap = new double[gridlength * gridlength];
             sf = Content.Load<SpriteFont>("File");
             random = new Random();
             _spriteBatch = new SpriteBatch(GraphicsDevice);
@@ -51,12 +56,12 @@ namespace SnakeGeneticLearning
             // TODO: use this.Content to load your game content here
             for (int i = 0; i < countofsnake; i++)
             {
-                bloclist[i] = new InfoBloc(new Snake(5*countofsnake, 5*countofsnake), new Individual(new int[] { computemap.Length * 2 / 12 + 4, 4 }, computemap.Length, random), 0,countofsnake);
+                bloclist[i] = new InfoBloc(new Snake(5*gridlength, 5*gridlength), new Individual(new int[] { computemap.Length * (2 / 12) + 4, 4 }, computemap.Length, random), 0,gridlength);
                 bloclist[i].snake.Food = new FoodPiece();
-                bloclist[i].snake.Food.xposition = 5*countofsnake;
-                bloclist[i].snake.Food.yposition = 5*countofsnake;
-                bloclist[i].pastpos.X = 5*countofsnake;
-                bloclist[i].pastpos.Y = 5*countofsnake;
+                bloclist[i].snake.Food.xposition = 5*gridlength;
+                bloclist[i].snake.Food.yposition = 5*gridlength;
+                bloclist[i].pastpos.X = 5*gridlength;
+                bloclist[i].pastpos.Y = 5*gridlength;
                
             }
            
@@ -103,11 +108,11 @@ namespace SnakeGeneticLearning
                     if (i.snake.lifestatus)
                     {
                       
-                        for (int j = 0; j < countofsnake; j++)
+                        for (int j = 0; j < gridlength; j++)
                         {
-                            for (int k = 0; k < countofsnake; k++)
+                            for (int k = 0; k < gridlength; k++)
                             {
-                                computemap[j * countofsnake + k] = i.map[j][k];
+                                computemap[j * gridlength + k] = i.map[j][k];
                             }
                         }
                         double[] directionoutput = i.info.network.Compute(computemap);
@@ -184,10 +189,59 @@ namespace SnakeGeneticLearning
 
 
 
-                        i.snake.Move(random,turncounter,countofsnake);
+                        i.snake.Move(random,turncounter,gridlength);
                         if (i.snake.lifestatus)
                         {
-                            i.fitnessval = timer.TotalMilliseconds / 1000 + i.snake.score * 100;
+                            if(i.snake.score>1)
+                            {
+                                closenesstofood = (Math.Abs(i.snake.Head.xposition - i.snake.Food.xposition) + Math.Abs(i.snake.Head.yposition - i.snake.Food.yposition)) / 2;
+                            }
+                            
+                            if (closenesstofood < 10)
+                            {
+                                if (i.pointsforclose < 20)
+                                {
+                                    i.pointsforclose = 20;
+                                }
+                            }
+                            if (closenesstofood < 5)
+                            {
+                                if (i.pointsforclose < 30)
+                                {
+                                    i.pointsforclose = 30;
+                                }
+                            }
+                            if (closenesstofood < 15)
+                            {
+                                if (i.pointsforclose < 10)
+                                {
+                                    i.pointsforclose = 10;
+                                }
+                            }
+                            if (closenesstofood < 20)
+                            {
+                                if (i.pointsforclose < 5)
+                                {
+                                    i.pointsforclose = 5;
+                                }
+                            }
+                            if (closenesstofood < 25)
+                            {
+                                if (i.pointsforclose < 2.5)
+                                {
+                                    i.pointsforclose = 2.5;
+                                }
+                            }
+                            if((i.snake.score)>2)
+                            {
+                                scorecount = i.snake.score-2;
+                            }
+                            else
+                            {
+                                scorecount = 0;
+                            }
+                            i.fitnessval = (timer.TotalMilliseconds) + (scorecount * 500)+(i.pointsforclose*2);
+                           
                         }
 
                         if (i.snake.lifestatus)
@@ -195,7 +249,9 @@ namespace SnakeGeneticLearning
                             i.info.fitness = i.fitnessval;
                         }
 
-                        i.currpos.X = (float)i.snake.Head.xposition;
+
+
+                            i.currpos.X = (float)i.snake.Head.xposition;
                         i.currpos.Y = (float)i.snake.Head.yposition;
                         if(i.snake.lastgrow+500<turncounter)
                         {
@@ -222,7 +278,7 @@ namespace SnakeGeneticLearning
                         if (i.snake.lifestatus)
                         {
                             allive = true;
-                            i.MapUpdate(countofsnake);
+                            i.MapUpdate(gridlength);
                         }
                        
                     }
@@ -243,14 +299,14 @@ namespace SnakeGeneticLearning
             GraphicsDevice.Clear(Color.Black);
             foreach (var i in bloclist)
             {
-                i.snake.DrawSnake(i.snake.Head, _spriteBatch, i.fitnessval / BestSnake);
+                i.snake.DrawSnake(i.snake.Head, _spriteBatch, 1);
                 if (i.snake.lifestatus)
                 {
                     _spriteBatch.DrawRectangle((float)i.snake.Food.xposition, (float)i.snake.Food.yposition, 10, 10, Color.Red, 1, 0);
                 }
 
             }
-            _spriteBatch.DrawString(sf, gencounter.ToString(), new Vector2((int)(4.5*countofsnake), (int)(4.7*countofsnake)), Color.White);
+            _spriteBatch.DrawString(sf, gencounter.ToString(), new Vector2((int)(4.5*gridlength), (int)(4.7*gridlength)), Color.White);
             // TODO: Add your drawing code here
             _spriteBatch.End();
             base.Draw(gameTime);
@@ -275,17 +331,18 @@ namespace SnakeGeneticLearning
             {
                 i.fitnessval = 0;
                 i.info.fitness = 0;
-                i.snake.Head.xposition = 5*countofsnake;
-                i.snake.Head.yposition = 5*countofsnake;
+                i.snake.Head.xposition = 5*gridlength;
+                i.snake.Head.yposition = 5*gridlength;
                 i.snake.lifestatus = true;
                 i.snake.score = 0;
                 i.snake.Tail = i.snake.Head;
-                i.snake.Food.xposition = 5*countofsnake;
-                i.snake.Food.yposition = 5*countofsnake;
-                i.pastpos.X = 5*countofsnake;
-                i.pastpos.Y = 5*countofsnake;
+                i.snake.Food.xposition = 5*gridlength;
+                i.snake.Food.yposition = 5*gridlength;
+                i.pastpos.X = 5*gridlength;
+                i.pastpos.Y = 5*gridlength;
                 turncounter = 0;
-
+                i.pointsforclose = 0;
+                
 
             }
             gencounter++;

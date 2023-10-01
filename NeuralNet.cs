@@ -28,7 +28,7 @@ namespace SnakeGeneticLearning
         }
         void Crossover(NeuralNetwork winner, NeuralNetwork loser, Random random)
         {
-            for (int i = 0; i < winner.layers.Length; i++)
+            for (int i = 1; i < winner.layers.Length; i++)
             {
                 //References to the Layers
                 Layer winLayer = winner.layers[i];
@@ -56,39 +56,45 @@ namespace SnakeGeneticLearning
         }
         void Mutate(NeuralNetwork net, Random random, double mutationRate)
         {
+            int counter = 0;
             foreach (Layer layer in net.layers)
             {
-                foreach (Neuron neuron in layer.Neurons)
+                if(counter >net.layers.Length-2)
                 {
-                    //Mutate the Weights
-                    for (int i = 0; i < neuron.dendrites.Length; i++)
+                    foreach (Neuron neuron in layer.Neurons)
                     {
+                        //Mutate the Weights
+                        for (int i = 0; i < neuron.dendrites.Length; i++)
+                        {
+                            if (random.NextDouble() < mutationRate)
+                            {
+                                if (random.Next(2) == 0)
+                                {
+                                    neuron.dendrites[i].Weight *= (random.NextDouble() + 0.5); //scale weight
+                                }
+                                else
+                                {
+                                    neuron.dendrites[i].Weight *= -1; //flip sign
+                                }
+                            }
+                        }
+
+                        //Mutate the Bias
                         if (random.NextDouble() < mutationRate)
                         {
                             if (random.Next(2) == 0)
                             {
-                                neuron.dendrites[i].Weight *= (random.NextDouble() + 0.5); //scale weight
+                                neuron.bias *= (random.NextDouble() + 0.5); //scale weight
                             }
                             else
                             {
-                                neuron.dendrites[i].Weight *= -1; //flip sign
+                                neuron.bias *= -1; //flip sign
                             }
                         }
                     }
-
-                    //Mutate the Bias
-                    if (random.NextDouble() < mutationRate)
-                    {
-                        if (random.Next(2) == 0)
-                        {
-                            neuron.bias *= (random.NextDouble() + 0.5); //scale weight
-                        }
-                        else
-                        {
-                            neuron.bias *= -1; //flip sign
-                        }
-                    }
+                    counter++;
                 }
+                
             }
         }
 

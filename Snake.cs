@@ -15,6 +15,7 @@ namespace SnakeGeneticLearning
         public Vector2 currpos;
         public Vector2 pastpos;
         public byte[][] map;
+        public double pointsforclose;
 
         public InfoBloc(Snake Snake1, Individual Info, double Fitnessval, int count)
         {
@@ -82,14 +83,14 @@ namespace SnakeGeneticLearning
             Tail.xposition = 500;
             Tail.yposition = 500;
 
-            Food.xposition = random.Next((int)(count * .1), (int)(count * .9));
+            Food.xposition = random.Next(1, (int)(count));
             Food.xposition *= 10;
 
 
 
-            Food.yposition = random.Next((int)(count * .1), (int)(count * .9));
+            Food.yposition = random.Next(1, (int)(count));
             Food.yposition *= 10;
-
+            ;
         }
         public void Move(Random random, int turncounter, int count)
         {
